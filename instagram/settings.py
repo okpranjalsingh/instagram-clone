@@ -129,7 +129,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 project level code
 '''
 
-AUTH_USER_MODEL = 'users.CustomUser'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR/'profiles'
+AUTH_USER_MODEL = "users.CustomUser"
