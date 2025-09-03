@@ -9,11 +9,11 @@ class LoginView(APIView):
 
         
         # Fetch data from request
-        username = request.data.get('username')
+        email = request.data.get('email')
         password = request.data.get('password')
 
         #  Fetch user from DB
-        user = CustomUser.objects.filter(username=username).first()
+        user = CustomUser.objects.filter(email=email).first()
 
         # Check if user exists
         if user is not None:
