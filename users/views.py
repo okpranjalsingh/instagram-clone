@@ -1,7 +1,9 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import CustomUser
+from .models import(
+    Follow, CustomUser
+)
 from rest_framework.authtoken.models import Token
 from .serializers import CustomUserSerializer
 
@@ -64,9 +66,42 @@ class LogoutView(APIView):
             })
             
 
-print('debug', Token)
+# print('debug', Token)
 
 
 
+class FollowUnfollowView(APIView):
+    def post(self, request):
+        user = request.user
+        target_id = request.data.get('user_id')
 
+        try:
+            target_user = CustomUser.objects.get(id=target_id)
+        except CustomUser.DoesNotExist:
+            return Response (
+                {"error":"account not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        '''prevenet following youseld'''
+        if user.id == int(target_id):
+            return Response(
+                {"error":"you can't follow yourself"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        '''unfollow code'''
+        if Follow.objects.filter(follower=user, following=target_user).exists():
+            Follow.objects.filter(follower=user, following=target_user).delete()
+            return Response (
+                {"message":"the user has been unfollowed"},
+                status=status.HTTP_200_OK
+            )
+        
+        else:
+            Follow.objects.create(follower=user, following=target_user)
+            return Response(
+                {"message":"the user has been followed"},
+                status=status.HTTP_201_CREATED
+            )
 
