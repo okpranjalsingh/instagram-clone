@@ -68,42 +68,42 @@ class LogoutView(APIView):
 
 # print('debug', Token)
 
-def follow_unfollow(request):
-    user = request.user
-    target_id = request.data.get('user_id')
-
-    try:
-        target_user = CustomUser.objects.get(id=target_id)
-    except CustomUser.DoesNotExist:
-        return Response ({"error":"user does not exists"}, status=status.HTTP_404_NOT_FOUND)
-    
-    '''avoid following yourself'''
-    if user.id == target_user.id:
-        return Response ({"error":"you can't follow yourself"}, status=status.HTTP_400_BAD_REQUEST)
-    
-    if Follow.objects.filter(follower=user, following=target_user).exists():
-        Follow.objects.filter(follower=user, following=target_user).delete()
-        return Response ({"message":"user unfollowed"}, status=status.HTTP_200_OK)
-    else:
-        Follow.objects.create(follower=user, following=target_user)
-        return Response({"message":"user followed"}, status=status.HTTP_201_CREATED)
-    
 
 
+class FollowUnfollowView(APIView):
+    def post(self, request):
+        user = request.user
+        target_id = request.data.get('user_id')
 
-    
+        try:
+            target_user = CustomUser.objects.get(id=target_id)
+        except CustomUser.DoesNotExist:
+            return Response (
+                {"error":"account not found"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        '''prevenet following youseld'''
+        if user.id == int(target_id):
+            return Response(
+                {"error":"you can't follow yourself"},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
 
+        '''unfollow code'''
 
-
-
-
-
-
-
-
-
-
-
-
-
+        if Follow.objects.filter(follower=user, following=target_user).exists():
+            Follow.objects.filter(follower=user, following=target_user).delete()
+            return Response (
+                {"message":"the user has been unfollowed"},
+                status=status.HTTP_200_OK
+            )
+        
+        else:
+            Follow.objects.create(follower=user, following=target_user)
+            return Response(
+                {"message":"the user has been followed"},
+                status=status.HTTP_201_CREATED
+            )
 
