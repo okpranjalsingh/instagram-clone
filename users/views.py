@@ -90,9 +90,7 @@ class FollowUnfollowView(APIView):
                 status=status.HTTP_403_FORBIDDEN
             )
         
-
         '''unfollow code'''
-
         if Follow.objects.filter(follower=user, following=target_user).exists():
             Follow.objects.filter(follower=user, following=target_user).delete()
             return Response (
