@@ -2,15 +2,18 @@ from django.shortcuts import render
 
 # Create your views here.
 from rest_framework import generics, permissions
-from .serializers import PostSerializer
+from .serializers import PostSerializer,CommentsSerializers
 from .models import Post
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions, status
 from django.shortcuts import get_object_or_404
-from users.models import CustomUser
-from users.models import Follow
+from .models import (
+    Post,
+    Like,
+    Comment
+)
 
 
 '''list all the post and even you can create new'''
@@ -46,25 +49,89 @@ class FeedView(generics.ListAPIView):
 
 
 class PostUpdateView(APIView):
-    
     permission_classes = [IsAuthenticated]
     
     def put(self, request, post_id):
         #  Get the post
         post = get_object_or_404(Post, id=post_id)
-        
         #  Check ownership
         if post.user != request.user:
             return Response({"error": "You can't edit this post"}, status=403)
-        
         #  Update fields
         post.caption = request.data.get('caption', post.caption)
         if 'image' in request.data:
             post.image = request.data.get('image')
-        
         #  Save post
         post.save()
-        
         #  Return updated data
         serializer = PostSerializer(post)
         return Response(serializer.data, status=200)
+    
+
+
+
+
+# List + Create comments for a post
+class CommentListCreateView(generics.ListCreateAPIView):
+    serializer_class = CommentsSerializers
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        post_id = self.kwargs['post_id']
+        return Comment.objects.filter(post_id=post_id).order_by("-created_at")
+
+    def perform_create(self, serializer):
+        post = get_object_or_404(Post, id=self.kwargs['post_id'])
+        serializer.save(user=self.request.user, post=post)
+
+
+# Retrieve + Delete a specific comment
+class CommentDetailView(generics.RetrieveDestroyAPIView):
+    serializer_class = CommentsSerializers
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Comment.objects.filter(user=self.request.user)
+    
+
+
+
+# Likes
+class LikePostView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        # check if already liked
+        if Like.objects.filter(post=post, user=request.user).exists():
+            return Response({"error": "You have already liked this post"}, status=status.HTTP_400_BAD_REQUEST)
+
+        Like.objects.create(post=post, user=request.user)
+        return Response({"message": "Post liked successfully"}, status=status.HTTP_201_CREATED)
+
+
+class UnlikePostView(APIView):
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        like = Like.objects.filter(post=post, user=request.user).first()
+        if not like:
+            return Response({"error": "You haven't liked this post yet"}, status=status.HTTP_400_BAD_REQUEST)
+
+        like.delete()
+        return Response({"message": "Post unliked successfully"}, status=status.HTTP_200_OK)
+
+
+class PostLikesView(generics.ListAPIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, post_id):
+        post = get_object_or_404(Post, id=post_id)
+        likes = Like.objects.filter(post=post)
+        users = [like.user.username for like in likes]  # simple list of usernames
+        return Response({
+            "post_id": post.id,
+            "total_likes": likes.count(),
+            "liked_by": users
+        }, status=status.HTTP_200_OK)
