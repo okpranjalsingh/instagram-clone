@@ -5,7 +5,6 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.conf import settings
 
-
 class Profile(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -27,6 +26,12 @@ class Profile(models.Model):
         null=True,
         blank=True,
         default='profile_pics/default.jpg'
+    )
+
+    followers = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        related_name="following",
+        blank=True
     )
 
     def __str__(self):

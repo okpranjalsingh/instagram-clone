@@ -14,6 +14,7 @@ from .models import (
     Like,
     Comment
 )
+from rest_framework.pagination import CursorPagination
 
 
 '''list all the post and even you can create new'''
@@ -50,23 +51,33 @@ class FeedView(generics.ListAPIView):
 
 class PostUpdateView(APIView):
     permission_classes = [IsAuthenticated]
-    
-    def put(self, request, post_id):
-        #  Get the post
-        post = get_object_or_404(Post, id=post_id)
-        #  Check ownership
-        if post.user != request.user:
-            return Response({"error": "You can't edit this post"}, status=403)
-        #  Update fields
-        post.caption = request.data.get('caption', post.caption)
-        if 'image' in request.data:
-            post.image = request.data.get('image')
-        #  Save post
-        post.save()
-        #  Return updated data
+
+    def get(self, request, post_id):
+        """Retrieve a single post (only if you own it)"""
+        post = get_object_or_404(Post, id=post_id, user=request.user)
         serializer = PostSerializer(post)
-        return Response(serializer.data, status=200)
-    
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, post_id):
+        """Update a post (only if you own it)"""
+        post = get_object_or_404(Post, id=post_id)
+        if post.user != request.user:
+            return Response({"error": "You can't edit this post"}, status=status.HTTP_403_FORBIDDEN)
+
+        serializer = PostSerializer(post, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request, post_id):
+        """Delete a post (only if you own it)"""
+        post = get_object_or_404(Post, id=post_id)
+        if post.user != request.user:
+            return Response({"error": "You can't delete this post"}, status=status.HTTP_403_FORBIDDEN)
+
+        post.delete()
+        return Response({"message": "Post deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 
@@ -86,14 +97,24 @@ class CommentListCreateView(generics.ListCreateAPIView):
 
 
 # Retrieve + Delete a specific comment
-class CommentDetailView(generics.RetrieveDestroyAPIView):
-    serializer_class = CommentsSerializers
-    permission_classes = [permissions.IsAuthenticated]
+class CommentDetailView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return Comment.objects.filter(user=self.request.user)
-    
+    def get(self, request, comment_id):
+        """Retrieve a single comment"""
+        comment = get_object_or_404(Comment, id=comment_id)
+        serializer = CommentsSerializers(comment)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def delete(self, request, comment_id):
+        """Delete a comment (only if user owns it)"""
+        comment = get_object_or_404(Comment, id=comment_id)
+
+        if comment.user != request.user:
+            return Response({"error": "You cannot delete this comment"}, status=status.HTTP_403_FORBIDDEN)
+
+        comment.delete()
+        return Response({"message": "Comment deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
 
 
 # Likes
@@ -112,7 +133,7 @@ class LikePostView(APIView):
 
 class UnlikePostView(APIView):
     permission_classes = [IsAuthenticated]
-    
+
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
         like = Like.objects.filter(post=post, user=request.user).first()
@@ -135,3 +156,21 @@ class PostLikesView(generics.ListAPIView):
             "total_likes": likes.count(),
             "liked_by": users
         }, status=status.HTTP_200_OK)
+
+
+
+class FeedPagination(CursorPagination):
+    page_size = 10
+    ordering = '-created_at'
+
+class FeedView(generics.ListAPIView):
+    serializer_class = PostSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = FeedPagination
+
+    def get_queryset(self):
+        user = self.request.user
+        following_users = user.following_set.values_list("following", flat=True)
+        return Post.objects.filter(user__id__in=following_users).order_by("-created_at")
+
+

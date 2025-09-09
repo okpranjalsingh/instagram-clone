@@ -66,7 +66,7 @@ class LogoutView(APIView):
             })
             
 
-# print('debug', Token)
+print('debug', Token)
 
 
 
