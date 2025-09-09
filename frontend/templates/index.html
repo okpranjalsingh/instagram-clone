@@ -1,0 +1,24 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Instagram Clone - Feed</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>Instagram Clone</h1>
+        <nav>
+            <a href="profile.html">Profile</a>
+            <a href="login.html" id="logoutBtn">Logout</a>
+        </nav>
+    </header>
+
+    <main>
+        <div id="feedContainer"></div>
+    </main>
+
+    <script src="{% static 'js/feed.js' %}"></script>
+</body>
+</html>
