@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'profiles',
     'feed',
+    'rest_framework'
     
     
 ]
