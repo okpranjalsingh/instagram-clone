@@ -43,9 +43,6 @@ INSTALLED_APPS = [
     'profiles',
     'feed',
 
-    'rest_framework'
-
-    'frontend',
 
     
     

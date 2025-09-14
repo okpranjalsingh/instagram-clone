@@ -64,11 +64,7 @@ class LogoutView(APIView):
             return Response({
                 "error":"Token verificartion failed"
             })
-            
-
-print('debug', Token)
-
-
+        
 
 class FollowUnfollowView(APIView):
     def post(self, request):
