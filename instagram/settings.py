@@ -42,6 +42,8 @@ INSTALLED_APPS = [
     'users.apps.UsersConfig',
     'profiles',
     'feed',
+    'instadm',
+    
 
 
     
