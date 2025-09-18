@@ -7,9 +7,10 @@ class Dm(models.Model):
     textings = models.TextField(blank=False, null=False)
     image = models.ImageField(blank=True, null=True)
 
+    def __str__(self):
+        return self.username
+    
+    
 
-  def save(self, *args, **kwargs):
-        if self.pk:
-            [Count number of users following self]
-            [Set self.number_of_followers to counted number]
-        super(Feed, self).save(*args, **kwargs)
+    
+
