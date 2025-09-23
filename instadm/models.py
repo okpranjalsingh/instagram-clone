@@ -8,9 +8,5 @@ class Dm(models.Model):
     textings = models.TextField(blank=False, null=False)
     image = models.ImageField(blank=True, null=True)
 
-
-
-    
-    
-    
-
+    def __str__(self):
+        return self.username
