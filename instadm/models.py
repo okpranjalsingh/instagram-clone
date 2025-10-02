@@ -27,9 +27,10 @@ class Dm(models.Model):
         return self.username, self.sender
 
 class Info(models.Model):
-    def __init__(self, sender, reciver):
+    def __init__(self, sender, reciver, updated_at):
         self.sender = sender
         self.reviver = reciver
+        self.updated_at = updated_at
         pass
 
     
